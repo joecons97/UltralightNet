@@ -7,7 +7,7 @@ public struct RenderTarget : IEquatable<RenderTarget>
 {
 	private byte _IsEmpty;
 	/// <summary>Whether this target is empty (null texture)</summary>
-	public bool IsEmpty { readonly get => Unsafe.As<byte, bool>(ref Unsafe.AsRef(_IsEmpty)); set => _IsEmpty = Unsafe.As<bool, byte>(ref value); }
+	public bool IsEmpty { readonly get => Methods.BitCast<byte, bool>(_IsEmpty); set => _IsEmpty = Methods.BitCast<bool, byte>(value); }
 
 	/// <summary>The viewport width (in device coordinates).</summary>
 	public uint Width;
@@ -26,7 +26,7 @@ public struct RenderTarget : IEquatable<RenderTarget>
 
 	private byte _TextureFormat;
 	/// <summary>The pixel format of the texture.</summary>
-	public ULBitmapFormat TextureFormat { readonly get => Unsafe.As<byte, ULBitmapFormat>(ref Unsafe.AsRef(_TextureFormat)); set => _TextureFormat = Unsafe.As<ULBitmapFormat, byte>(ref value); }
+	public ULBitmapFormat TextureFormat { readonly get => Methods.BitCast<byte, ULBitmapFormat>(_TextureFormat); set => _TextureFormat = Methods.BitCast<ULBitmapFormat, byte>(value); }
 
 	/// <summary>UV coordinates of the texture (this is needed because the texture may be padded).</summary>
 	public ULRect UV;

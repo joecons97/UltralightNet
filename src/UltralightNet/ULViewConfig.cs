@@ -76,12 +76,12 @@ public struct ULViewConfig : IEquatable<ULViewConfig>
 
 		public void FromManaged(ULViewConfig config)
 		{
-			IsAccelerated = Unsafe.As<bool, byte>(ref config.IsAccelerated);
-			IsTransparent = Unsafe.As<bool, byte>(ref config.IsTransparent);
+			IsAccelerated = Methods.BitCast<bool, byte>(config.IsAccelerated);
+			IsTransparent = Methods.BitCast<bool, byte>(config.IsTransparent);
 			InitialDeviceScale = config.InitialDeviceScale;
-			InitialFocus = Unsafe.As<bool, byte>(ref config.InitialFocus);
-			EnableImages = Unsafe.As<bool, byte>(ref config.EnableImages);
-			EnableJavaScript = Unsafe.As<bool, byte>(ref config.EnableJavaScript);
+			InitialFocus = Methods.BitCast<bool, byte>(config.InitialFocus);
+			EnableImages = Methods.BitCast<bool, byte>(config.EnableImages);
+			EnableJavaScript = Methods.BitCast<bool, byte>(config.EnableJavaScript);
 			FontFamilyStandard = new(config.FontFamilyStandard.AsSpan());
 			FontFamilyFixed = new(config.FontFamilyFixed.AsSpan());
 			FontFamilySerif = new(config.FontFamilySerif.AsSpan());

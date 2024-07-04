@@ -67,8 +67,8 @@ namespace UltralightNet.JavaScript
 			public static bool operator ==(JSGlobalContextRef left, JSGlobalContextRef right) => left._handle == right._handle;
 			public static bool operator !=(JSGlobalContextRef left, JSGlobalContextRef right) => left._handle != right._handle;
 
-			public static implicit operator JSContextRef(JSGlobalContextRef globalContextRef) => JavaScriptMethods.BitCast<JSGlobalContextRef, JSContextRef>(globalContextRef);
-			public static explicit operator JSGlobalContextRef(JSContextRef contextRef) => JavaScriptMethods.BitCast<JSContextRef, JSGlobalContextRef>(contextRef);
+			public static implicit operator JSContextRef(JSGlobalContextRef globalContextRef) => Methods.BitCast<JSGlobalContextRef, JSContextRef>(globalContextRef);
+			public static explicit operator JSGlobalContextRef(JSContextRef contextRef) => Methods.BitCast<JSContextRef, JSGlobalContextRef>(contextRef);
 		}
 		public readonly struct JSContextRef
 		{

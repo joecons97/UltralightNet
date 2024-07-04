@@ -5,7 +5,7 @@ namespace UltralightNet;
 public struct ULCommand : IEquatable<ULCommand>
 {
 	private byte _CommandType;
-	public ULCommandType CommandType { readonly get => Unsafe.As<byte, ULCommandType>(ref Unsafe.AsRef(_CommandType)); set => _CommandType = Unsafe.As<ULCommandType, byte>(ref value); }
+	public ULCommandType CommandType { readonly get => Methods.BitCast<byte, ULCommandType>(_CommandType); set => _CommandType = Methods.BitCast<ULCommandType, byte>(value); }
 	public ULGPUState GPUState;
 
 	/// <remarks>Only used when <see cref="CommandType"/> is <see cref="ULCommandType.DrawGeometry"/></remarks>

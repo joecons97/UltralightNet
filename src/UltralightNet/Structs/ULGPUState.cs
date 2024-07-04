@@ -18,13 +18,13 @@ public unsafe struct ULGPUState : IEquatable<ULGPUState>
 	public Matrix4x4 Transform;
 
 	private byte _EnableTexturing;
-	public bool EnableTexturing { readonly get => Unsafe.As<byte, bool>(ref Unsafe.AsRef(_EnableTexturing)); set => _EnableTexturing = Unsafe.As<bool, byte>(ref value); }
+	public bool EnableTexturing { readonly get => Methods.BitCast<byte, bool>(_EnableTexturing); set => _EnableTexturing = Methods.BitCast<bool, byte>(value); }
 
 	private byte _EnableBlend;
-	public bool EnableBlend { readonly get => Unsafe.As<byte, bool>(ref Unsafe.AsRef(_EnableBlend)); set => _EnableBlend = Unsafe.As<bool, byte>(ref value); }
+	public bool EnableBlend { readonly get => Methods.BitCast<byte, bool>(_EnableBlend); set => _EnableBlend = Methods.BitCast<bool, byte>(value); }
 
 	private byte _ShaderType;
-	public ULShaderType ShaderType { readonly get => Unsafe.As<byte, ULShaderType>(ref Unsafe.AsRef(_ShaderType)); set => _ShaderType = Unsafe.As<ULShaderType, byte>(ref value); }
+	public ULShaderType ShaderType { readonly get => Methods.BitCast<byte, ULShaderType>(_ShaderType); set => _ShaderType = Methods.BitCast<ULShaderType, byte>(value); }
 
 	public uint RenderBufferId;
 
@@ -92,7 +92,7 @@ public unsafe struct ULGPUState : IEquatable<ULGPUState>
 #endif
 
 	private byte _EnableScissor;
-	public bool EnableScissor { readonly get => Unsafe.As<byte, bool>(ref Unsafe.AsRef(_EnableScissor)); set => _EnableScissor = Unsafe.As<bool, byte>(ref value); }
+	public bool EnableScissor { readonly get => Methods.BitCast<byte, bool>(_EnableScissor); set => _EnableScissor = Methods.BitCast<bool, byte>(value); }
 
 	public ULIntRect ScissorRect;
 

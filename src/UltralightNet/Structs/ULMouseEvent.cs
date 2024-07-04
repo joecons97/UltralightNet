@@ -19,11 +19,11 @@ public static unsafe partial class Methods
 public struct ULMouseEvent : IEquatable<ULMouseEvent>
 {
 	private int _Type;
-	public ULMouseEventType Type { readonly get => Unsafe.As<int, ULMouseEventType>(ref Unsafe.AsRef(_Type)); set => _Type = Unsafe.As<ULMouseEventType, int>(ref value); }
+	public ULMouseEventType Type { readonly get => Methods.BitCast<int, ULMouseEventType>(_Type); set => _Type = Methods.BitCast<ULMouseEventType, int>(value); }
 	public int X;
 	public int Y;
 	private int _Button;
-	public ULMouseEventButton Button { readonly get => Unsafe.As<int, ULMouseEventButton>(ref Unsafe.AsRef(_Button)); set => _Button = Unsafe.As<ULMouseEventButton, int>(ref value); }
+	public ULMouseEventButton Button { readonly get => Methods.BitCast<int, ULMouseEventButton>(_Button); set => _Button = Methods.BitCast<ULMouseEventButton, int>(value); }
 
 	public readonly bool Equals(ULMouseEvent other) => Type == other.Type && X == other.X && Y == other.Y && Button == other.Button;
 }

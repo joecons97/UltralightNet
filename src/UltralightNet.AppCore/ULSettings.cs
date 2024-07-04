@@ -41,8 +41,8 @@ public struct ULSettings : IEquatable<ULSettings>
 			DeveloperName = new(settings.DeveloperName.AsSpan());
 			AppName = new(settings.AppName.AsSpan());
 			FileSystemPath = new(settings.FileSystemPath.AsSpan());
-			LoadShadersFromFileSystem = Unsafe.As<bool, byte>(ref settings.LoadShadersFromFileSystem);
-			ForceCPURenderer = Unsafe.As<bool, byte>(ref settings.ForceCPURenderer);
+			LoadShadersFromFileSystem = Methods.BitCast<bool, byte>(settings.LoadShadersFromFileSystem);
+			ForceCPURenderer = Methods.BitCast<bool, byte>(settings.ForceCPURenderer);
 		}
 
 		public readonly Marshaller ToUnmanaged() => this;

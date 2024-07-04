@@ -22,13 +22,6 @@ namespace UltralightNet.JavaScript
 			internal static void ThrowUnsupportedConstructor() => throw new NotSupportedException("Constructor is unsupported");
 			internal static Exception UnsupportedMethodException => new NotSupportedException("Method is unsupported");
 
-			// backported from net8.0 for compatibility
-			internal static TTo BitCast<TFrom, TTo>(TFrom from) where TFrom : unmanaged where TTo : unmanaged
-			{
-				Debug.Assert(sizeof(TFrom) == sizeof(TTo));
-				return Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(from));
-			}
-
 			[LibraryImport(LibWebCore)]
 			public static partial JSValueRef JSEvaluateScript(JSContextRef context, JSStringRef script, JSObjectRef thisObject, JSStringRef sourceURL, int startingLineNumber, JSValueRef* exception = null);
 
@@ -46,8 +39,8 @@ namespace UltralightNet.JavaScript
 		{
 			public NativeHandle JSHandle
 			{
-				get => JavaScriptMethods.BitCast<nuint, NativeHandle>((nuint)Handle);
-				protected init => Handle = (void*)JavaScriptMethods.BitCast<NativeHandle, nuint>(value);
+				get => Methods.BitCast<nuint, NativeHandle>((nuint)Handle);
+				protected init => Handle = (void*)Methods.BitCast<NativeHandle, nuint>(value);
 			}
 		}
 	}

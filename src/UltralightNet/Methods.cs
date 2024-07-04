@@ -63,4 +63,16 @@ public static unsafe partial class Methods
 		}
 #endif
 	}
+
+	// backported from net8.0 for compatibility
+	internal static TTo BitCast<TFrom, TTo>(TFrom from) where TFrom : unmanaged where TTo : unmanaged
+#if !NET8_0_OR_GREATER
+	{
+		System.Diagnostics.Debug.Assert(sizeof(TFrom) == sizeof(TTo));
+		return Unsafe.As<TFrom, TTo>(ref from);
+	}
+#else
+	=> Unsafe.BitCast<TFrom, TTo>(from);
+#endif
+
 }

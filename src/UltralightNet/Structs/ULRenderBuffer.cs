@@ -11,13 +11,13 @@ public struct ULRenderBuffer
 	private byte _HasStencilBuffer;
 	public bool HasStencilBuffer
 	{
-		readonly get => Unsafe.As<byte, bool>(ref Unsafe.AsRef(_HasStencilBuffer));
-		set => _HasStencilBuffer = Unsafe.As<bool, byte>(ref Unsafe.AsRef(value));
+		readonly get => Methods.BitCast<byte, bool>(_HasStencilBuffer);
+		set => _HasStencilBuffer = Methods.BitCast<bool, byte>(value);
 	}
 	private byte _HasDepthBuffer;
 	public bool HasDepthBuffer
 	{
-		readonly get => Unsafe.As<byte, bool>(ref Unsafe.AsRef(_HasDepthBuffer));
-		set => _HasDepthBuffer = Unsafe.As<bool, byte>(ref Unsafe.AsRef(value));
+		readonly get => Methods.BitCast<byte, bool>(_HasDepthBuffer);
+		set => _HasDepthBuffer = Methods.BitCast<bool, byte>(value);
 	}
 }

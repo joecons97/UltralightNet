@@ -129,11 +129,11 @@ public struct ULConfig : IEquatable<ULConfig>
 		{
 			CachePath = new(config.CachePath.AsSpan());
 			ResourcePathPrefix = new ULString(config.ResourcePathPrefix.AsSpan());
-			FaceWinding = Unsafe.As<ULFaceWinding, byte>(ref Unsafe.AsRef(config.FaceWinding));
-			FontHinting = Unsafe.As<ULFontHinting, byte>(ref Unsafe.AsRef(config.FontHinting));
+			FaceWinding = Methods.BitCast<ULFaceWinding, byte>(config.FaceWinding);
+			FontHinting = Methods.BitCast<ULFontHinting, byte>(config.FontHinting);
 			FontGamma = config.FontGamma;
 			UserStylesheet = new(config.UserStylesheet.AsSpan());
-			ForceRepaint = Unsafe.As<bool, byte>(ref Unsafe.AsRef(config.ForceRepaint));
+			ForceRepaint = Methods.BitCast<bool, byte>(config.ForceRepaint);
 			AnimationTimerDelay = config.AnimationTimerDelay;
 			ScrollTimerDelay = config.ScrollTimerDelay;
 			RecycleDelay = config.RecycleDelay;

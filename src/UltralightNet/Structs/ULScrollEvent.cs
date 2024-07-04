@@ -11,7 +11,7 @@ public struct ULScrollEvent : IEquatable<ULScrollEvent>
 	/// <summary>
 	/// Type of event
 	/// </summary>
-	public ULScrollEventType Type { readonly get => Unsafe.As<int, ULScrollEventType>(ref Unsafe.AsRef(_Type)); set => _Type = Unsafe.As<ULScrollEventType, int>(ref value); }
+	public ULScrollEventType Type { readonly get => Methods.BitCast<int, ULScrollEventType>(_Type); set => _Type = Methods.BitCast<ULScrollEventType, int>(value); }
 
 	/// <summary>
 	/// horizontal scroll

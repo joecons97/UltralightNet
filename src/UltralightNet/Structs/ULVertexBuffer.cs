@@ -10,7 +10,7 @@ public unsafe ref struct ULVertexBuffer
 
 	public ULVertexBufferFormat Format
 	{
-		readonly get => Unsafe.As<byte, ULVertexBufferFormat>(ref Unsafe.AsRef(format));
-		set => format = Unsafe.As<ULVertexBufferFormat, byte>(ref value);
+		readonly get => Methods.BitCast<byte, ULVertexBufferFormat>(format);
+		set => format = Methods.BitCast<ULVertexBufferFormat, byte>(value);
 	}
 }

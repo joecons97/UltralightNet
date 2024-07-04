@@ -140,8 +140,8 @@ namespace UltralightNet.JavaScript
 			public static bool operator ==(JSObjectRef left, JSObjectRef right) => left._handle == right._handle;
 			public static bool operator !=(JSObjectRef left, JSObjectRef right) => left._handle != right._handle;
 
-			public static implicit operator JSValueRef(JSObjectRef jsObject) => JavaScriptMethods.BitCast<JSObjectRef, JSValueRef>(jsObject);
-			public static explicit operator JSObjectRef(JSValueRef jsValue) => JavaScriptMethods.BitCast<JSValueRef, JSObjectRef>(jsValue);
+			public static implicit operator JSValueRef(JSObjectRef jsObject) => Methods.BitCast<JSObjectRef, JSValueRef>(jsObject);
+			public static explicit operator JSObjectRef(JSValueRef jsValue) => Methods.BitCast<JSValueRef, JSObjectRef>(jsValue);
 		}
 		public readonly struct JSClassRef
 		{
