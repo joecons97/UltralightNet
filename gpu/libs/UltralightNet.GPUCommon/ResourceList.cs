@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
@@ -27,6 +28,8 @@ public class ResourceList<T> : IDisposable
 	[SuppressMessage("CodeAnalysis", "CA1816")]
 	public void Dispose()
 	{
+		Debug.Assert(list.Count - freeIds.Count is 0 or 1, "All resources must be properly disposed");
+
 		list.Clear();
 		list.TrimExcess();
 		freeIds.Clear();

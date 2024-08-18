@@ -12,6 +12,8 @@ namespace UltralightNet.GPU.Vulkan;
 
 public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 {
+	public const Format ImageFormat = Format.B8G8R8A8Unorm;
+
 	readonly Vk vk;
 	readonly PhysicalDevice physicalDevice;
 	readonly Device device;
@@ -23,7 +25,7 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 	bool MSAA => SampleCount != SampleCountFlags.Count1Bit;
 
 	readonly ResourceList<int> textures = new();
-	readonly ResourceList<int> renderBuffers = new();
+	readonly ResourceList<RenderBufferEntry> renderBuffers = new();
 	readonly ResourceList<GeometryEntry> geometries = new();
 
 	readonly DestroyQueue destroyQueue = new();
@@ -40,6 +42,7 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 	readonly PipelineLayout fillPipelineLayout;
 	readonly PipelineLayout pathPipelineLayout;
 	readonly RenderPass renderPass;
+	readonly RenderPass clearRenderBufferRenderPass;
 	readonly Pipeline fillPipeline;
 	readonly Pipeline pathPipeline;
 
@@ -106,17 +109,17 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 			if (MSAA)
 			{
 				colorAttachmentDescription = new(
-					format: Format.B8G8R8A8Unorm,
+					format: ImageFormat,
 					samples: SampleCount,
 					loadOp: AttachmentLoadOp.Load,
-					storeOp: AttachmentStoreOp.Store,
+					storeOp: AttachmentStoreOp.Store, // Unfortunately
 					stencilLoadOp: AttachmentLoadOp.DontCare,
 					stencilStoreOp: AttachmentStoreOp.DontCare,
 					initialLayout: ImageLayout.ColorAttachmentOptimal,
 					finalLayout: ImageLayout.ColorAttachmentOptimal
 				);
 				resolveAttachmentDescription = new(
-					format: Format.B8G8R8A8Unorm,
+					format: ImageFormat,
 					samples: SampleCountFlags.Count1Bit,
 					loadOp: AttachmentLoadOp.DontCare,
 					storeOp: AttachmentStoreOp.Store,
@@ -134,7 +137,7 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 			else
 			{
 				colorAttachmentDescription = new(
-					format: Format.B8G8R8A8Unorm,
+					format: ImageFormat,
 					samples: SampleCountFlags.Count1Bit,
 					loadOp: AttachmentLoadOp.Load,
 					storeOp: AttachmentStoreOp.Store,
@@ -172,6 +175,21 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 				dependencyCount: MSAA ? 1U : 2U, pDependencies: subpassDependencies
 			);
 			vk.CreateRenderPass(device, &renderPassCreateInfo, null, out renderPass).Check();
+
+			/// Clear RenderBuffer RenderPass
+
+			colorAttachmentDescription = colorAttachmentDescription with
+			{
+				LoadOp = AttachmentLoadOp.Clear,
+				InitialLayout = ImageLayout.Undefined
+			};
+			subpassDependencies[0] = subpassDependencies[0] with
+			{
+				SrcStageMask = PipelineStageFlags.BottomOfPipeBit,
+				SrcAccessMask = MSAA ? AccessFlags.ColorAttachmentReadBit | AccessFlags.ColorAttachmentWriteBit : AccessFlags.ShaderReadBit
+			};
+
+			vk.CreateRenderPass(device, &renderPassCreateInfo, null, out clearRenderBufferRenderPass).Check();
 		}
 		{ // Pipelines
 			StackDisposable<ShaderModule> CreateShaderModule(UnmanagedMemoryStream stream)
@@ -276,6 +294,7 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 		{
 			if (IsDisposed) return;
 			disposer(Value);
+			value = default!; // just in case
 			IsDisposed = true;
 		}
 	}
@@ -289,6 +308,7 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 		vk.DestroyPipeline(device, pathPipeline, null);
 		vk.DestroyPipeline(device, fillPipeline, null);
 
+		vk.DestroyRenderPass(device, clearRenderBufferRenderPass, null);
 		vk.DestroyRenderPass(device, renderPass, null);
 
 		vk.DestroyPipelineLayout(device, pathPipelineLayout, null);
@@ -384,7 +404,7 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 
 		g.GetBuffersToWriteTo(CurrentFrame, out var index, out var vertex);
 
-		new Span<byte>(vertexBuffer.data, (int)vertexBuffer.size).CopyTo(vertex);
+		new Span<byte>(vertexBuffer.data, (int)vertexBuffer.size).CopyTo(vertex); // TODO: use Buffer.MemoryCopy
 		new Span<byte>(indexBuffer.data, (int)indexBuffer.size).CopyTo(index);
 
 		if (!UMA)
@@ -449,15 +469,46 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 		geometries.Remove((int)geometryId);
 	}
 
+	#region Helpers
+	void BeginRenderPass(ref uint currentRenderBuffer, bool clear, uint renderBuffer, Extent2D dimensions)
+	{
+		if (clear && currentRenderBuffer == renderBuffer) Debug.Assert(currentRenderBuffer != renderBuffer, "Double Ultralight RenderBuffer clear"); // this shouldn't happen
+
+		if (currentRenderBuffer == renderBuffer) return;
+		else if (currentRenderBuffer is not 0)
+			vk.CmdEndRenderPass(commandBuffer);
+
+		var renderBufferEntry = renderBuffers[(int)renderBuffer];
+
+		var renderPassBeginInfo = new RenderPassBeginInfo(
+			renderPass: renderPass,
+			framebuffer: renderBufferEntry.Framebuffer,
+			renderArea: new Rect2D(new(0, 0), dimensions));
+
+		var (R, G, B) = (209f, 113f, 177f);
+		var clearValue = new ClearValue(color: new(R / 255f, G / 255f, B / 255f));
+
+		renderPassBeginInfo.PClearValues = &clearValue;
+		renderPassBeginInfo.ClearValueCount = clear ? 1u : 0u;
+
+		vk.CmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, SubpassContents.Inline);
+
+		currentRenderBuffer = renderBuffer;
+	}
+	#endregion Helpers
+
 	void IGPUDriver.UpdateCommandList(ULCommandList commandList)
 	{
+		uint currentRenderBuffer = 0;
+
 		foreach (var command in commandList.AsSpan())
 		{
-			if (command.CommandType is ULCommandType.ClearRenderBuffer)
-			{
+			Debug.Assert(command.CommandType is ULCommandType.ClearRenderBuffer or ULCommandType.DrawGeometry);
+			Debug.Assert(command.GPUState.RenderBufferId is not 0);
 
-			}
-			else
+			BeginRenderPass(ref currentRenderBuffer, command.CommandType is ULCommandType.ClearRenderBuffer, command.GPUState.RenderBufferId, new(command.GPUState.ViewportWidth, command.GPUState.ViewportHeight));
+
+			if (command.CommandType is ULCommandType.DrawGeometry)
 			{
 				ref var geo = ref geometries[(int)command.GeometryId];
 				var indexBuffer = geo.GetIndexBufferToUse(UMA);
@@ -467,6 +518,9 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 				vk.CmdDrawIndexed(commandBuffer, command.IndicesCount, 1, command.IndicesOffset, 0, 0);
 			}
 		}
+
+		if (currentRenderBuffer is not 0)
+			vk.CmdEndRenderPass(commandBuffer);
 	}
 
 	uint IGPUDriver.NextTextureId() => (uint)textures.GetNewId();
@@ -507,5 +561,10 @@ public unsafe sealed class VulkanGPUDriver : IGPUDriver, IDisposable
 			index = new Span<byte>(Mapped + (Index.size * (latestFrame = frame)), (int)Index.size);
 			vertex = new Span<byte>(Mapped + (Vertex.offset + (Vertex.size * latestFrame)), (int)Vertex.size);
 		}
+	}
+	[StructLayout(LayoutKind.Auto, Pack = 8)]
+	unsafe struct RenderBufferEntry
+	{
+		public readonly Framebuffer Framebuffer { get; }
 	}
 }
